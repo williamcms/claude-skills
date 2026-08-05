@@ -22,6 +22,7 @@ These are mandatory checks, not optional. Do not skip one and estimate blind; as
 - **Cross-check a detailed example against the rest of a list the same way.** When a briefing gives one concrete example (an existing URL, existing content, a migration need) alongside a list of other items presented as equal priorities, do not assume the example is the exceptional case and the rest need less work. Ask whether the same conditions generalize to every item in the list before sizing them differently.
 - **Ask for repo access if you do not already have the code.** Do not estimate from the brief alone; get the repo (a local path or a clone URL) to verify the diagnosis and to find code you can reuse. Only proceed without it if the user says the code is unavailable.
 - **Verify the diagnosis in the actual code or logs before describing it.** Do not restate a bug report's claimed cause as fact. Read the files, search for the route, config, or constant in question, and reproduce if possible. If someone already diagnosed it, confirm it yourself and phrase it as confirmed, in Portuguese: "Confirmado no código: ...".
+- **Verify rendered-output claims (heading levels, DOM structure, visible markup) against the live page, not against guesswork or the repo alone.** Code in the repo often does not show the final output when content is CMS-managed (Site Editor, a headless CMS) — the tag actually rendered depends on content nobody versioned. If a live URL is available, fetch it and read the real HTML before asserting or leaving open a claim about what is rendered today. Only fall back to asking the user, or to leaving it as an open question, when no live URL exists yet to check.
 - **Look for existing code to reuse before assuming a build-from-scratch cost.** A feature that reuses an existing component, client, or route convention is materially faster than one with no precedent. Search for it before sizing. Do not cite a file as "reuse" just because it contains a trivial one-line call to a native/stdlib API (`window.scrollTo`, `fetch`, `Array.map`) that is also used elsewhere — that is not a precedent that changes effort, and listing it reads as padding, not diligence. Only cite a file when it is a genuine integration point (where the new code plugs in) or non-trivial reusable logic/structure.
 - **Use an installed platform skill for platform-specific detail.** Do not estimate a platform constraint from memory when a skill documents it. If no relevant skill is installed, ask the user for one or for documentation; failing that, search the web for the platform's official documentation before guessing at limits, quotas, or required patterns.
 - **Do not default to the most sophisticated architecture.** Question whether a database entity, a new service, or a new app is justified for the data volume and change frequency described. A handful of rarely-changing records driven by a config value is usually cheaper to build and maintain than a backing store, until the requirements say otherwise. The same restraint applies to gating or scoping content: check whether the platform's own admin/CMS already does it natively (for example, VTEX Site Editor content Versions applied per URL) before proposing a custom component.
@@ -37,6 +38,7 @@ The estimate is a single, direct, final document read by both the developer who 
 
 - State the conclusion, not the investigation trail. No file lists, no search trails, no stack minutiae. Write "é o site institucional", not "procurei por X e Y e não achei Z".
 - Do not assert specifics you could not validate in code. Generalize when unconfirmed: write `as combinações`, not `as 21 combinações`, if you could not confirm the count.
+- Never include the local absolute path used to reach the repo (for example `C:\www\project`, `/Users/name/code/project`) anywhere in the delivered estimate. It is specific to whoever investigated the code, not to the reader, and it leaks local machine structure into a client-facing document. Name the codebase by its repo/platform name only (`tema project`, not `C:\www\project`); cite individual files with repo-relative paths only, as in template item 5.
 
 ## Calibrate to who will do the work
 
@@ -52,8 +54,10 @@ Calibration anchors from real estimates, at a junior or generalist pace on VTEX.
 | Spacing or alignment pass across one page's components | ~1h30 |
 | Restyling an existing mid-size (about 100-line) component to a new design | ~1h |
 | Responsive validation and functional regression pass on one existing page | ~1h |
+| Responsive/functional QA on each additional page reusing an already-validated component, per page after the first | ~10min |
 | Content change only, no code | 1h-1h30 |
 | Migrating existing content (banner, title, description, SEO text) from an old custom page to a native platform page via built-in CMS versioning, per item | ~30min |
+| Transcribing ready-made content (e.g. Q&A pairs) from a source doc into an already-existing content slot, per list item | ~10min |
 | New data entity, few fields, manual data entry | ~1h |
 | Simple event listener or webhook handler, single purpose | ~2h |
 | URL-param detection and apply via an API with no native support | ~3h30 |
@@ -120,7 +124,7 @@ Omit any section whose content you cannot state; do not fill it with speculation
 5. `Arquivos já existentes que serão a base do trabalho:` followed by a bullet list of `caminho/do/arquivo: descrição`. Include only when the repo was validated; a short line may follow for extra existing behaviors. Omit the whole section when there is no repo access. What qualifies as a citation here follows the "look for existing code to reuse" check above, not a separate rule.
 6. `Pontos em aberto:` followed by a bullet list, one open question per line. See "Open questions".
 7. `Itens que não aparecem no Figma:` followed by one posture sentence and a bullet list. Include only when applicable. See "Items not in the Figma".
-8. `Tempo total estimado (escopo do briefing): Xh.` then, on the next line, `Complexidade: <nível>.`. Use one of the standard levels defined in "Complexity level". When there are variants, replace the single total with one total line per variant (for example `Variante A, <descrição>: Xh` and `Variante B, <descrição>: Xh`), followed by a single `Complexidade: <nível>.`; see "The budget" for how the breakdown is shared. For an investigation-first task, replace `Xh` with the literal `A ser estimado após investigação` (see "Investigation-first tasks").
+8. `Tempo total estimado: Xh.` then, on the next line, `Complexidade: <nível>.`. Use one of the standard levels defined in "Complexity level". When there are variants, replace the single total with one total line per variant (for example `Variante A, <descrição>: Xh` and `Variante B, <descrição>: Xh`), followed by a single `Complexidade: <nível>.`; see "The budget" for how the breakdown is shared. For an investigation-first task, replace `Xh` with the literal `A ser estimado após investigação` (see "Investigation-first tasks").
 9. `Sobre o orçamento:` followed by the bullet breakdown, each line `- <descrição>: Xh`. No separate sum line: item 8 already states the total, and the bullets plus the item 4 `Tempo de orçamento` line must sum to it exactly. See "The budget". Omit this section entirely for an investigation-first task.
 10. `Bloco opcional, a confirmar (<o que>)` followed by a bullet list, then the closing line `Se incluídos, somam Xh, levando o total a Xh.`. Include only when there is optional or out-of-briefing scope.
 11. `Links:` followed by a bullet list of reference URLs (briefing links, official platform documentation). May be used in any estimate. Fill it only with links already at hand: links the user provided, or pages found while researching for the task itself. Never search the web just to fill this section. If there is nothing at hand, keep the section with the placeholder line `- <links de referência, a preencher>` for the user to fill manually.
@@ -176,7 +180,7 @@ Applies when the core of the task is investigating an unknown cause or behavior 
 
 What changes against the normal template:
 
-- No hours anywhere in the document. Item 8 becomes the literal line `Tempo total estimado (escopo do briefing): A ser estimado após investigação.`, still followed by `Complexidade: <nível>.`.
+- No hours anywhere in the document. Item 8 becomes the literal line `Tempo total estimado: A ser estimado após investigação.`, still followed by `Complexidade: <nível>.`.
 - Omit `Sobre o orçamento:` entirely; there are no lines to sum.
 - Omit `Tempo de orçamento:` too (item 4); there is no total to fold it into.
 - Keep the diagnosis paragraph (item 2), phrased as unconfirmed hypotheses, naming the typical candidate causes for the reported pattern and stating that identifying the real cause is part of the task. Tone, in Portuguese: "Não foi possível confirmar a causa preliminar sem iniciar a investigação; os candidatos típicos nesse padrão são X, Y ou Z. Identificar a causa real é parte da tarefa."
@@ -190,7 +194,7 @@ What changes against the normal template:
   the real, durable fix may belong upstream (the platform vendor's tooling
   or support), and a local one-off patch could be premature or incomplete
   if other sites share the same gap. In this case: item 8 reads
-  `Tempo total estimado (escopo do briefing): Escopo de investigação, com
+  `Tempo total estimado: Escopo de investigação, com
   possível abertura de chamado com o fornecedor da plataforma.`; the
   diagnosis paragraph states the confirmed cause plainly, not hedged, then
   adds one line flagging the vendor-escalation option; and any ready-made
@@ -199,7 +203,7 @@ What changes against the normal template:
   the `Links:` entry, not inside the section itself), kept apart from the
   narrative.
 
-- **External-ownership handoff variant.** When the cause and the fix are both fully confirmed, but the entity that must execute it is a different team or organization (the client's own internal team, another agency, a third party) whose access to the relevant system was not verified, item 8 does not use `A ser estimado após investigação`, it states who must execute it: `Tempo total estimado (escopo do briefing): Ação a ser realizada por <time>, fora do escopo de <nosso time>.` Omit `Sobre o orçamento:` and `Tempo de orçamento:` (item 4) as well; there is no numeric total to fold either into. Do not give it a `Complexidade` rating unless one can actually be backed by verified facts; use `Complexidade: n/a.` otherwise. Keep the diagnosis paragraph confirmed and plain, this variant assumes the cause is already known, unlike the general investigation-first case. `Pontos em aberto:` must name who holds admin access to the relevant system as an open question directed at that team, plus any decision left for them to make (for example choosing between two valid fix approaches). A ready-made technical fix sketch stays out of the estimate's body, in its own `Nota técnica para quem for implementar:` section, the same placement rule as the platform/vendor variant's trailing note.
+- **External-ownership handoff variant.** When the cause and the fix are both fully confirmed, but the entity that must execute it is a different team or organization (the client's own internal team, another agency, a third party) whose access to the relevant system was not verified, item 8 does not use `A ser estimado após investigação`, it states who must execute it: `Tempo total estimado: Ação a ser realizada por <time>, fora do escopo de <nosso time>.` Omit `Sobre o orçamento:` and `Tempo de orçamento:` (item 4) as well; there is no numeric total to fold either into. Do not give it a `Complexidade` rating unless one can actually be backed by verified facts; use `Complexidade: n/a.` otherwise. Keep the diagnosis paragraph confirmed and plain, this variant assumes the cause is already known, unlike the general investigation-first case. `Pontos em aberto:` must name who holds admin access to the relevant system as an open question directed at that team, plus any decision left for them to make (for example choosing between two valid fix approaches). A ready-made technical fix sketch stays out of the estimate's body, in its own `Nota técnica para quem for implementar:` section, the same placement rule as the platform/vendor variant's trailing note.
 
 Reference example (VTEX, price divergence between ERP and commercial policy):
 
@@ -212,7 +216,7 @@ Pontos em aberto:
 - Não foi informado quantas políticas comerciais a loja possui.
 - Se a causa estiver do lado do ERP (integração mantida pelo cliente ou parceiro), a correção sai deste escopo e a entrega passa a ser o diagnóstico documentado, com o ajuste a ser feito do lado do ERP.
 
-Tempo total estimado (escopo do briefing): A ser estimado após investigação.
+Tempo total estimado: A ser estimado após investigação.
 Complexidade: Média-Alta.
 
 Links:
@@ -228,3 +232,13 @@ The version sent to the client is leaner than the working estimate discussed int
 - Omit internal notes: who the executor is and their calibration, tooling limits (for example a design-tool rate limit), and the `Tempo de orçamento:` line (item 4). Because that line is a numeric part of the headline total, drop it from the total too: the client-facing `Tempo total estimado` equals only the coding budget (item 9's bullets), not the internal working total. Keep only assumptions that affect the client (for example a promotion the client must configure on their side). A code-quality point that added time (for example the plain-CSS 30min) stays as a budget line, but under a neutral client-facing name (for example `Ajustes de estilização`), never the internal reason for it.
 - Write component or file names in plain parentheses, with no code formatting: (SharePdp), not `SharePdp`.
 - Keep parentheticals short; do not enumerate functionality inside test or regression lines.
+
+# Maintaining this skill
+
+This file gets edited over time as real estimates surface gaps. Before writing a change to it:
+
+- Read the whole file first, not just the section being touched, to check whether an existing rule already covers the same ground.
+- Match the surrounding section's own style (terseness, whether it uses a Portuguese-quote example, table row length) instead of dropping the new text in verbatim.
+- Place a new rule or table row next to its closest existing relative, not appended at the end, unless there is genuinely no natural neighbor.
+- Reread the new text for redundancy: check whether one clause already says what another clause says.
+- Present the exact diff and wait for confirmation before writing, same as any other state-changing edit.
