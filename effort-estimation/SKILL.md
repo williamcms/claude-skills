@@ -23,7 +23,7 @@ These are mandatory checks, not optional. Do not skip one and estimate blind; as
 - **Ask for repo access if you do not already have the code.** Do not estimate from the brief alone; get the repo (a local path or a clone URL) to verify the diagnosis and to find code you can reuse. Only proceed without it if the user says the code is unavailable.
 - **Verify the diagnosis in the actual code or logs before describing it.** Do not restate a bug report's claimed cause as fact. Read the files, search for the route, config, or constant in question, and reproduce if possible. If someone already diagnosed it, confirm it yourself and phrase it as confirmed, in Portuguese: "Confirmado no código: ...".
 - **Verify rendered-output claims (heading levels, DOM structure, visible markup) against the live page, not against guesswork or the repo alone.** Code in the repo often does not show the final output when content is CMS-managed (Site Editor, a headless CMS) — the tag actually rendered depends on content nobody versioned. If a live URL is available, fetch it and read the real HTML before asserting or leaving open a claim about what is rendered today. Only fall back to asking the user, or to leaving it as an open question, when no live URL exists yet to check.
-- **Look for existing code to reuse before assuming a build-from-scratch cost.** A feature that reuses an existing component, client, or route convention is materially faster than one with no precedent. Search for it before sizing. Do not cite a file as "reuse" just because it contains a trivial one-line call to a native/stdlib API (`window.scrollTo`, `fetch`, `Array.map`) that is also used elsewhere — that is not a precedent that changes effort, and listing it reads as padding, not diligence. Only cite a file when it is a genuine integration point (where the new code plugs in) or non-trivial reusable logic/structure.
+- **Look for existing code to reuse before assuming a build-from-scratch cost.** A feature that reuses an existing component, client, or route convention is materially faster than one with no precedent. Search for it before sizing. Do not cite a file as "reuse" just because it contains a trivial one-line call to a native/stdlib API (`window.scrollTo`, `fetch`, `Array.map`) that is also used elsewhere — that is not a precedent that changes effort, and listing it reads as padding, not diligence. Only cite a file when it is a genuine integration point (where the new code plugs in) or non-trivial reusable logic/structure. This includes a pattern already shipped in a sibling repo (another brand's theme on the same platform) when the brief names it as the template to follow.
 - **Use an installed platform skill for platform-specific detail.** Do not estimate a platform constraint from memory when a skill documents it. If no relevant skill is installed, ask the user for one or for documentation; failing that, search the web for the platform's official documentation before guessing at limits, quotas, or required patterns.
 - **Do not default to the most sophisticated architecture.** Question whether a database entity, a new service, or a new app is justified for the data volume and change frequency described. A handful of rarely-changing records driven by a config value is usually cheaper to build and maintain than a backing store, until the requirements say otherwise. The same restraint applies to gating or scoping content: check whether the platform's own admin/CMS already does it natively (for example, VTEX Site Editor content Versions applied per URL) before proposing a custom component.
 - **Do not guess who owns or has access to external infrastructure the fix touches** (a CDN/WAF zone, a DNS panel, a third-party account outside this repo). State it as an open point for the team or client to confirm, never as settled fact. The same restraint applies to a complexity rating: if it cannot actually be backed by verified facts, write `Complexidade: n/a.` instead of asserting a level. See "External-ownership handoff variant".
@@ -46,30 +46,38 @@ Ask or infer who will execute the estimate. A senior specialist who knows the pl
 
 Calibration anchors from real estimates, at a junior or generalist pace on VTEX. Adjust proportionally for other platforms or more senior teams.
 
-| Task shape | Hours |
-|------|------| 
-| Presentation-only tweak to an existing component (icon-only button, simplified button style) | ~30min |
-| Placing an already-registered block or component on another page | ~30min |
-| Repositioning and restyling a block already plugged into the page | ~30min |
-| Spacing or alignment pass across one page's components | ~1h30 |
-| Restyling an existing mid-size (about 100-line) component to a new design | ~1h |
-| Responsive validation and functional regression pass on one existing page | ~1h |
-| Responsive/functional QA on each additional page reusing an already-validated component, per page after the first | ~10min |
-| Content change only, no code | 1h-1h30 |
-| Migrating existing content (banner, title, description, SEO text) from an old custom page to a native platform page via built-in CMS versioning, per item | ~30min |
-| Transcribing ready-made content (e.g. Q&A pairs) from a source doc into an already-existing content slot, per list item | ~10min |
-| New data entity, few fields, manual data entry | ~1h |
-| Simple event listener or webhook handler, single purpose | ~2h |
-| URL-param detection and apply via an API with no native support | ~3h30 |
-| Custom admin interface for non-technical users | ~8h |
-| Order-broadcast automation populating a data store | ~11h |
-| Full small app: background job, data store, and frontend logic | 16h-22h depending on whether it includes a user-facing listing screen |
+| Task shape | Stack | Hours |
+|------|------|------|
+| Presentation-only tweak to an existing component (icon-only button, simplified button style) | Any | ~30min |
+| Placing an already-registered block or component on another page | VTEX IO | ~30min |
+| Repositioning and restyling a block already plugged into the page | VTEX IO | ~30min |
+| Spacing or alignment pass across one page's components | Any | ~1h30 |
+| SCSS variants for a small, fixed set of layout options on an existing component (e.g. left/center/right alignment), including a mobile fallback | FastStore | ~45min |
+| Restyling an existing mid-size (about 100-line) component to a new design | Any | ~1h |
+| Wiring a component to respect new CMS toggle/enum props (conditional render, forward a value to CSS) | FastStore | ~45min |
+| Porting an existing calculated badge/tag pattern from one page type to another (e.g. a vitrine/PLP badge added to the PDP), same toggle convention | FastStore | ~45min |
+| Adapting an existing component from a sibling theme/repo to the current theme's design | FastStore | ~1h30 |
+| Responsive validation and functional regression pass on one existing page | Any | ~1h |
+| Responsive and functional test of a toggle plus a small set of discrete variants (e.g. 3 alignments), desktop and mobile | FastStore | ~1h |
+| Responsive/functional QA on each additional page reusing an already-validated component, per page after the first | Any | ~10min |
+| Content change only, no code | Any | 1h-1h30 |
+| Migrating existing content (banner, title, description, SEO text) from an old custom page to a native platform page via built-in CMS versioning, per item | VTEX IO | ~30min |
+| Transcribing ready-made content (e.g. Q&A pairs) from a source doc into an already-existing content slot, per list item | Any | ~10min |
+| New data entity, few fields, manual data entry (includes a CMS-managed list with a few fields, e.g. tags with text/color/border per collection id) | Any | ~1h |
+| Add a couple of new toggle/dropdown fields to an existing block's schema (contentSchemas.json only, no separate publish round trip) | VTEX IO | ~30min |
+| Add a couple of new toggle/dropdown fields to an existing section's Headless CMS schema, then generate and publish it | FastStore | ~45min |
+| Simple event listener or webhook handler, single purpose | Any | ~2h |
+| URL-param detection and apply via an API with no native support | Any | ~3h30 |
+| Custom admin interface for non-technical users | Any | ~8h |
+| Order-broadcast automation populating a data store | Any | ~11h |
+| Full small app: background job, data store, and frontend logic | Any | 16h-22h depending on whether it includes a user-facing listing screen |
 
 Patterns worth carrying forward:
 
 - A custom admin interface is nearly as expensive as the automation behind it. Always cost it as its own line, never assume it is "just a form."
 - "No code" stays cheap only when it is pure content. Touching checkout, order data, or requiring a new app raises the complexity floor regardless of scope size — see "Complexity level" for the exact rating.
 - User-facing screens (a new listing page, an account section) cost proportionally more than the backend logic feeding them.
+- Integrating the same feature into the PDP typically costs more than into a PLP/vitrine list view (more layout and state to fit into); cost each surface as its own line, never assume PDP integration equals list-view integration.
 
 ## Codebase quality points
 
