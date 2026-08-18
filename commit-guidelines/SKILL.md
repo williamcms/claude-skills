@@ -10,6 +10,7 @@ description: Apply when writing, proposing, or running a git commit message. Cov
 - **Never run `git commit` without the user approving the exact message first.** "Create a commit" means present the message, wait for approval, then commit. "Create a commit message" means the message only, no git commands.
 - **Never attribute an LLM/AI assistant as commit co-author** (a `Co-Authored-By:` trailer for the assistant) unless the user has explicitly confirmed, for this commit or as a standing preference, that they want it. A commit message suggestion alone is not proof that an LLM/AI is actively working on the repo. Default: ask first.
 - **Before describing a change as moved, renamed, or refactored instead of newly added, verify it against git history**, not against what the working tree or staging area currently looks like. Run `git log` and `git show <past-ref>:<path>` on the affected file; only call something a "move" if a past commit actually contained the prior state. Content that only ever existed uncommitted (working tree or index) was never "moved" from anywhere, it is a first-time addition.
+- **Base the message only on the actual staged diff, not on the conversation.** Run `git diff --staged` and describe what the files changed into, regardless of who wrote each change, which plan step it came from, or whether the assistant made the edit or not. Don't narrate proposals, plan/step numbering, or authorship attribution in the message, or in the reasoning shown to the user while producing it.
 
 ## Message format
 
