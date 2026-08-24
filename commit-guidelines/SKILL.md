@@ -14,6 +14,7 @@ description: Apply when writing, proposing, or running a git commit message. Cov
 
 ## Message format
 
+- Write the commit message in English, regardless of the language the conversation is happening in.
 - First line: max 50 characters, concise summary. Keep any provided prefixes (e.g., `feat:`, `fix:`, `refactor:`), and adjust wording to meet the 50-char limit.
 - If a prefix was not provided, ask if the user wants one added, and suggest one based on the Conventional Commits spec (https://www.conventionalcommits.org/en/v1.0.0/).
 - After a blank line, one or more complement lines may follow, each max 70 characters.
