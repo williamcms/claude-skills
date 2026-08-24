@@ -1,4 +1,4 @@
-# oneOf/anyOf/allOf/dependencies, and writing a custom widget function
+# Schema authoring patterns: oneOf/dependencies, custom widgets, and more
 
 Sources: `react-jsonschema-form@1.0.1` core behavior (verified against `vtex-apps/admin-pages`), plus patterns documented by the community project [`gblcintra/schema-ui`](https://github.com/gblcintra/schema-ui) — a VTEX IO app that demos schema/widget combinations. Anything below marked "community pattern" comes from that project, not from `admin-pages`' own source; verify against the running Site Editor before relying on it for anything load-bearing.
 
@@ -21,7 +21,21 @@ Not custom logic in `admin-pages` — native `react-jsonschema-form`/JSON Schema
         {
           "properties": {
             "showMoreConfig": { "enum": [true] },
-            "numberItem": { "type": "number", "title": "Campo de número", "default": 8 }
+            "numberItem": { "type": "number", "title": "Campo de número", "default": 8 },
+            "numberIntegerItem": {
+              "type": "integer", "title": "Campo com range", "minimum": 10, "maximum": 100,
+              "widget": { "ui:widget": "range" }
+            }
+          }
+        },
+        {
+          "properties": {
+            "showMoreConfig": { "enum": [false] },
+            "alert": {
+              "type": "string", "title": "Aviso",
+              "description": "Ative o campo acima para ver mais opções.",
+              "widget": { "ui:field": "(schema) => <div>{schema.description}</div>" }
+            }
           }
         }
       ]
@@ -29,7 +43,30 @@ Not custom logic in `admin-pages` — native `react-jsonschema-form`/JSON Schema
   }
 }
 ```
-(community pattern, `gblcintra/schema-ui`) — a boolean toggle that reveals `numberItem` only when checked. Nested `oneOf` inside another `oneOf`/`dependencies` also works, confirmed in `admin-pages`' own test suite (`BlockConfigurationEditor/utils.test.ts`).
+(community pattern, `gblcintra/schema-ui`) — a boolean toggle that reveals `numberItem`/`numberIntegerItem` when checked, and an `alert` message in the `false` branch instead. Every `oneOf` needs one branch per value the discriminant (`showMoreConfig`) can take — a `oneOf` with only the `true` branch leaves the `false` state with nothing declared. (The real repo nests `alert` oddly as a sibling key inside `showMoreConfig`'s own object rather than as a sibling property in the branch — that placement does not match any documented JSON Schema/rjsf keyword, so it is corrected here rather than reproduced.) Nested `oneOf` inside another `oneOf`/`dependencies` also works, confirmed in `admin-pages`' own test suite (`BlockConfigurationEditor/utils.test.ts`).
+
+## Reusable enums, labels, and whole-tree defaults
+
+Source: community pattern, `gblcintra/schema-ui`; all three are standard JSON Schema, not VTEX-specific.
+
+- **`enumNames`**: a parallel array of human-readable labels for `enum`, when the stored value itself should not be the label (e.g. storing a hex color but showing a color name):
+  ```jsx
+  selectItem: {
+    type: 'string', title: 'Seleção de Cor', default: '#000',
+    enum: ['#000', '#fff'], enumNames: ['Preto', 'Branco'],
+    widget: { 'ui:widget': 'select' },
+  }
+  ```
+- **`definitions` + `$ref`**: declare a shared enum (or any subschema) once at the schema root, reuse it across properties instead of repeating the same `enum` list:
+  ```jsx
+  definitions: {
+    largeEnum: { enum: ['option #0', 'option #1', 'option #2', 'option #3'] },
+  },
+  properties: {
+    reference: { type: 'string', title: 'Seleção usando definitions como referência', $ref: '#/definitions/largeEnum' },
+  }
+  ```
+- **Root-level `default` mirroring the whole schema**: instead of a `default` per property, a single object shaped like the entire schema tree can sit on the schema's own `default`, pre-filling every field (including nested objects and array items with their own `__editorItemTitle`) in one place. Useful for seeding a brand-new block with a complete, sensible starting configuration rather than a pile of empty fields.
 
 ## Writing a custom widget function
 
@@ -203,6 +240,27 @@ fieldNull: {
 }
 ```
 Note `type: 'null'` here — there is no value to collect, so `ui:widget` (which still wraps an input) would not fit; `ui:field` takes over the whole slot, label included, and renders whatever JSX the function returns.
+
+The same `type: 'null'` + `ui:field` combination, named `__blockItemTitle` by convention (community pattern, `gblcintra/schema-ui`), doubles as a **section header inside a nested `object` group** — placed as the first property of the group so it renders before the group's real fields:
+```jsx
+textProps: {
+  title: 'Text Props',
+  type: 'object',
+  widget: { classNames: 'bg-black-20 ba b--light-gray ph3 mb3' }, // background sets the group apart visually
+  properties: {
+    __blockItemTitle: {
+      type: 'null',
+      title: 'Configuração do schema relacionados a string',
+      widget: {
+        'ui:field': ({ schema }: any) => <h4 className="ma0 f5 near-black">{schema?.title}</h4>,
+      },
+    },
+    titleItem: { type: 'string', title: 'Título', /* ... */ },
+    passwordItem: { type: 'string', title: 'Senha', /* ... */ },
+  },
+}
+```
+Grouping related properties under an `object` with its own `classNames` (a distinct background per group), each opening with a `__blockItemTitle` header, is how a long flat form gets visually split into labeled sections without any layout component beyond what the schema itself declares.
 
 ### Array items: `__editorItemTitle`
 

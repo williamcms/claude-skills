@@ -55,7 +55,80 @@ export const widgets = {
 
 `TextWidget` has no implementation of its own — it is `props.registry.widgets.BaseInput`, read from the live registry. Because `admin-pages` overrides the `BaseInput` key, any plain string field (no `ui:widget`, no `format`) still renders VTEX's own input.
 
-Extra `uiSchema`-style keys observed on real schemas (community-documented, not verified in `admin-pages` source): `ui:placeholder`, `ui:inputType`, `ui:help`, `ui:options`, `ui:disabled`, `ui:readonly`, `ui:field` (a full custom field renderer, distinct from `ui:widget`), and a VTEX-specific `classNames` for Tachyons utility classes on the field wrapper.
+## Extra `uiSchema` keys (beyond `ui:widget`)
+
+Source: community pattern, [`gblcintra/schema-ui`](https://github.com/gblcintra/schema-ui) — these are standard `react-jsonschema-form` uiSchema keys, not verified individually against `admin-pages`' own code (which only registers `widgets`, it does not special-case any of these), but they are native rjsf behavior so they apply the same way here.
+
+| Key | Goes on | Does |
+|---|---|---|
+| `ui:placeholder` | any input widget | Placeholder text shown when the field is empty |
+| `ui:inputType` | `BaseInput`-backed widgets | Native HTML `input` `type` attribute (`password`, `email`, `tel`, ...) without switching the whole widget |
+| `ui:help` | any widget | Help text rendered below the field |
+| `ui:disabled` | any widget | Renders the control but blocks editing; the value still submits |
+| `ui:readonly` | any widget | Same visual effect as `ui:disabled` on most widgets, but is a uiSchema-level flag — compare to the schema-level `readOnly: true` keyword below |
+| `ui:options` | widget-specific | A grab-bag object each widget reads its own keys from (see examples) |
+| `classNames` | any widget | VTEX-specific: Tachyons utility classes applied to the field's wrapper |
+
+```jsx
+titleItem: {
+  type: 'string',
+  title: 'Título PlaceHolder',
+  minLength: 10,
+  widget: { 'ui:widget': 'text', 'ui:placeholder': 'Ex.: Teste' },
+},
+passwordItem: {
+  type: 'string',
+  title: 'Senha',
+  widget: { 'ui:inputType': 'password', 'ui:help': 'Dica: Faça com que seja forte!' },
+},
+descriptionItem: {
+  type: 'string',
+  title: 'Bio',
+  widget: { 'ui:widget': 'textarea', 'ui:options': { rows: 5 } }, // TextareaWidget reads options.rows
+},
+```
+A string's max length is a schema-level constraint, not a widget option — `maxLength: 100` goes next to `type`/`title` on the property itself (rjsf validates it there); it is not a key `ui:options` reads for `textarea`, so `{'ui:options': {maxLength: 10}}` is silently ignored rather than enforced.
+
+```jsx
+altDatetime: {
+  type: 'string',
+  format: 'date-time',
+  widget: {
+    'ui:widget': 'alt-datetime',
+    'ui:options': { yearsRange: [2023, 2030], format: 'MDY' }, // AltDateTimeWidget-specific options
+  },
+},
+secret: {
+  type: 'string',
+  default: 'Invisivel string.',
+  widget: { 'ui:widget': 'hidden' }, // not rendered in the sidebar at all
+},
+disabledItem: {
+  type: 'string',
+  title: 'Campo Desabilitado',
+  widget: { 'ui:disabled': true },
+  default: 'desabilitado',
+},
+readonlyItem: {
+  type: 'string',
+  title: 'Campo somente Leitura',
+  widget: { 'ui:readonly': true }, // uiSchema-level readonly
+},
+readonlyItem2: {
+  type: 'string',
+  title: 'Campo somente Leitura 2',
+  readOnly: true, // schema-level JSON Schema keyword, same visual result, different mechanism
+},
+```
+`arrayItem`'s own `ui:options` are array-specific (`addable`/`removable`, controlling whether the sidebar shows the add/remove-item buttons at all):
+```jsx
+arrayItem: {
+  type: 'array',
+  maxItems: 5,
+  widget: { 'ui:options': { addable: true, removable: false } },
+  items: { type: 'object', properties: { /* ... */ } },
+},
+```
 
 ## The `IOMessage` widget
 

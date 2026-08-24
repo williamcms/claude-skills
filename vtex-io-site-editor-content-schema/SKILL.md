@@ -29,7 +29,7 @@ Each topic is self-sufficient. Load only what the task needs.
 | GraphQL: `ListContent`/`SaveContent`/`DeleteContent`, providers, real variable payloads                      | [references/queries.md](references/queries.md)                   |
 | Block tree: `iframeRuntime.extensions`, `__provideRuntime`, `__RENDER_8_COMPONENTS__`, the `isEditable` rule | [references/block-tree.md](references/block-tree.md)             |
 | Content form: where `uiSchema` comes from, the widget registry, the `IOMessage` widget                       | [references/form-and-widgets.md](references/form-and-widgets.md) |
-| `oneOf`/`anyOf`/`allOf`/`dependencies`, and authoring a custom widget function                               | [references/schema-patterns.md](references/schema-patterns.md)   |
+| `oneOf`/`anyOf`/`allOf`/`dependencies`, custom widget functions, and other schema patterns (`enumNames`, `$ref`, `ui:field`, array item titles) | [references/schema-patterns.md](references/schema-patterns.md) |
 
 ## Decision rules
 
@@ -38,10 +38,9 @@ Each topic is self-sufficient. Load only what the task needs.
 - Reach for a native widget name (`textarea`, `color`, `date`, `select`, `radio`, `range`, `image-uploader`, etc — see [references/form-and-widgets.md](references/form-and-widgets.md)) before writing an inline custom widget function. Only fall back to `'ui:widget': (props) => <JSX/>` when no native widget covers the UX (options loaded from an API, a visual picker, conditional rendering inside the field itself).
 - When writing a custom widget function, pull `SchemaField` from `registry.fields.SchemaField` and delegate to it instead of hand-rolling form wiring — it keeps the custom widget compatible with the rest of the rjsf lifecycle (validation, `formData` sync, nested schema resolution).
 - For a property whose value should be locale/binding-translatable, use `'ui:widget': 'IOMessage'` and type plain literal text — only pass an existing message id when it is genuinely registered in some app's `messages/*.json` already loaded on the page; an unmatched id renders literally on the storefront, which reads as broken content.
-- Use `dependencies` + `oneOf` for "field A's value decides which other fields appear." This is native JSON Schema/rjsf behavior — do not reimplement that branching in component code.
+- Use `dependencies`/`oneOf` when a field's visibility depends on *another* field's value — this is native JSON Schema/rjsf behavior, do not reimplement that branching in component code. Only branch inside the widget function itself when it depends on the field's *own* current value, which `dependencies` cannot target.
 - Reach for `array`/`object` schema nesting before inventing a flat, delimiter-packed string property to hold structured content.
 - A custom widget that fetches data (e.g., API-backed options) re-renders on every keystroke elsewhere in the form, not just its own — cache the result and the in-flight flag at module scope, and force one re-render via `onChange(value)` once the fetch resolves. See [references/schema-patterns.md](references/schema-patterns.md).
-- Use `dependencies`/`oneOf` when a field's visibility depends on *another* field's value; branch inside the widget function itself only when it depends on the field's *own* current value — `dependencies` cannot target that.
 
 ## Common failure modes
 
