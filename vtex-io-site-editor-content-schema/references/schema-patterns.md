@@ -221,6 +221,22 @@ widget: {
 ```
 Rule of thumb between the two: if the branch depends on *another* property's value, use `dependencies`/`oneOf` (declarative, admin-pages/rjsf owns it). If it depends on the field's *own* value, it has to live inside the widget function — `dependencies` cannot target a property's own value.
 
+### Styling a custom widget: Tachyons is available
+
+Source: verified in practice (real widget customization work), not from reading `admin-pages` source directly. A custom `ui:widget` function's JSX renders inside the Site Editor sidebar itself — `admin-pages`' own bundle, the same one the sidebar UI uses — which ships Tachyons. Any element the widget function returns can take Tachyons utility classes directly via `className`, no extra import or dependency needed:
+
+```tsx
+// help text meant to read as attached to the select/input above it
+<p className="i f6 bg-muted-5 ph3 pv2 br2 mt1 mb0">
+  {helpText}
+</p>
+```
+`i` italic, `f6` font-size (0.875rem/14px — `f7` is 0.75rem/12px; check the rest of the scale against the actual bundle before assuming a value, rather than guessing), `bg-muted-5` a neutral background token, `ph3`/`pv2` padding, `br2` border-radius, `mt1 mb0` tight margins so the block reads as attached to the field above it. Same toolkit for layout (`flex`, `justify-between`, `items-center`) and semantic tokens seen elsewhere in the Admin (`c-on-base`, `bg-warning--faded`, `bg-danger--faded`).
+
+This is a **second, separate mechanism** from the schema-level `widget: { classNames: '...' }` key (see [form-and-widgets.md](form-and-widgets.md)): `classNames` is read by `admin-pages` itself and applied to the wrapper it renders around any field (native or custom), declared in the schema with no widget function needed; a `className` inside a custom widget function's own returned JSX is plain React, styling only what that function renders. Reach for `classNames` first for simple cases; a custom widget function's own JSX is only needed when the styling target isn't the field's outer wrapper.
+
+**Scope of this**: it only covers JSX a widget function returns for rendering *inside the Site Editor sidebar*. It says nothing about whatever the storefront-facing component itself renders for shoppers (a modal, a popup, the block's normal output) — that runs in the theme's own bundle, a different one, which does not necessarily have Tachyons loaded. Do not carry this assumption over to storefront-rendered markup without checking that bundle separately.
+
 ### `ui:field` vs `ui:widget`
 
 `ui:widget` replaces only the input control; rjsf still renders the label, description, and error list around it. `ui:field` replaces the entire field — label, description, errors included — with a fully custom component. Reach for `ui:widget` first; only use `ui:field` when the standard label/description/error chrome itself needs to change (e.g. a `type: 'null'` property used purely to inject explanatory text into the form, with no input at all):

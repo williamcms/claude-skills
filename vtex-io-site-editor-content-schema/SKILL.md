@@ -43,6 +43,7 @@ Each topic is self-sufficient. Load only what the task needs.
 - Reach for `array`/`object` schema nesting before inventing a flat, delimiter-packed string property to hold structured content.
 - A custom widget that fetches data (e.g., API-backed options) re-renders on every keystroke elsewhere in the form, not just its own — cache the result and the in-flight flag at module scope, and force one re-render via `onChange(value)` once the fetch resolves. See [references/schema-patterns.md](references/schema-patterns.md).
 - The first time a task writes a custom `ui:widget` function or references `WidgetProps`/`Registry`/`SchemaField` in a project, copy [references/typings.md](references/typings.md)'s file into that project's `react/typings/schema.d.ts` as part of the same task — do it automatically, don't wait to be asked.
+- To style a custom widget's own JSX, use Tachyons utility classes directly (`className="i f6 bg-muted-5 ph3 pv2 br2"`) — `admin-pages`' sidebar bundle has Tachyons loaded. Do not assume the same about the storefront-facing component the block renders for shoppers; that is a different bundle. See [references/schema-patterns.md](references/schema-patterns.md).
 
 ## Common failure modes
 
