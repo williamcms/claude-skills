@@ -30,6 +30,7 @@ Each topic is self-sufficient. Load only what the task needs.
 | Block tree: `iframeRuntime.extensions`, `__provideRuntime`, `__RENDER_8_COMPONENTS__`, the `isEditable` rule | [references/block-tree.md](references/block-tree.md)             |
 | Content form: where `uiSchema` comes from, the widget registry, the `IOMessage` widget                       | [references/form-and-widgets.md](references/form-and-widgets.md) |
 | `oneOf`/`anyOf`/`allOf`/`dependencies`, custom widget functions, and other schema patterns (`enumNames`, `$ref`, `ui:field`, array item titles) | [references/schema-patterns.md](references/schema-patterns.md) |
+| TypeScript typings for `WidgetProps`/`Registry`/`SchemaField` (custom widgets) | [references/typings.md](references/typings.md) |
 
 ## Decision rules
 
@@ -41,6 +42,7 @@ Each topic is self-sufficient. Load only what the task needs.
 - Use `dependencies`/`oneOf` when a field's visibility depends on *another* field's value — this is native JSON Schema/rjsf behavior, do not reimplement that branching in component code. Only branch inside the widget function itself when it depends on the field's *own* current value, which `dependencies` cannot target.
 - Reach for `array`/`object` schema nesting before inventing a flat, delimiter-packed string property to hold structured content.
 - A custom widget that fetches data (e.g., API-backed options) re-renders on every keystroke elsewhere in the form, not just its own — cache the result and the in-flight flag at module scope, and force one re-render via `onChange(value)` once the fetch resolves. See [references/schema-patterns.md](references/schema-patterns.md).
+- The first time a task writes a custom `ui:widget` function or references `WidgetProps`/`Registry`/`SchemaField` in a project, copy [references/typings.md](references/typings.md)'s file into that project's `react/typings/schema.d.ts` as part of the same task — do it automatically, don't wait to be asked.
 
 ## Common failure modes
 
