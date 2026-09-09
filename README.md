@@ -14,6 +14,7 @@ of the public ones with production learnings folded in.
 | [vtex-io-masterdata](vtex-io-masterdata)               | VTEX IO Master Data v2: entities, schemas, typings, CRUD patterns                  |
 | [vtex-io-messages-and-i18n](vtex-io-messages-and-i18n) | VTEX IO localization via the `messages` builder and `react-intl`                   |
 | [vtex-io-react-apps](vtex-io-react-apps)               | VTEX IO React storefront/admin components, blocks, css-handles                     |
+| [vtex-checkout-native-fraud-controls](vtex-checkout-native-fraud-controls) | VTEX native checkout anti-fraud/anti-bot controls: reCAPTCHA v2/v3, blockRecaptchaV2, orderForm locks |
 | [vtex-io-performance-debugging](vtex-io-performance-debugging) | VTEX IO storefront performance debugging: official checklist, script ownership, bundle attribution |
 | [commit-guidelines](commit-guidelines)                 | Git commit message rules: format, approval workflow, co-author attribution         |
 
