@@ -208,6 +208,76 @@ If the app requires another app to function in every environment, STOP and confi
 
 This contract hard-installs a host app that should usually be externally managed and also attempts to auto-install a billable app, which builder-hub rejects.
 
+### Constraint: Pin actively-maintained transitive packages in `resolutions` to an exact version, not a range
+
+When a `resolutions` entry exists to work around a Node-engine or syntax incompatibility, pin the exact version (no `^`/`~`) unless the package is abandoned or the incompatible release was a major-version bump already excluded by the range.
+
+**Why this matters**
+
+A caret/tilde range still lets a fresh `yarn.lock` pick the newest patch satisfying it. Packages that never stop shipping patches (`node-releases`, `browserslist`, `caniuse-lite`, and similar) can silently raise their own `engines.node` requirement, or the syntax level of their published build, in a later patch still inside the same range. The `resolutions` entry keeps "working" on paper while a clean install quietly regresses.
+
+**Detection**
+
+If a `resolutions` entry pins a non-VTEX package with `^`/`~` to fix an `engines.node` or build-syntax incompatibility (as opposed to a peer-dependency conflict), STOP and switch to an exact version. Before trusting any test of whether a `resolutions` entry is still needed, delete `node_modules` and the lockfile and reinstall from scratch — a plain `yarn install` reuses the lockfile's already-resolved versions and hides whether the range would float upward on a clean install.
+
+**Correct**
+
+```json
+{
+  "resolutions": {
+    "node-releases": "2.0.14",
+    "graphql": "^16.6.0"
+  }
+}
+```
+
+`node-releases` is exact because it ships frequent patches that keep tightening `engines.node`. `graphql` is safe with a caret because the incompatible jump was the `17.0.0` major, already outside `^16.6.0`.
+
+**Wrong**
+
+```json
+{
+  "resolutions": {
+    "node-releases": "^2.0.14"
+  }
+}
+```
+
+`^2.0.14` still resolves to whatever the newest `2.x` patch is at install time (e.g. `2.0.54`), which may already require a Node version the target builder's sandbox doesn't have. The pin gives a false sense of safety.
+
+### Constraint: Builder-hub can run a different Node/TypeScript version per builder major, even within the same app
+
+Each builder major (`node: 6.x` vs `7.x`, `react: 3.x`, etc.) compiles and installs in its own builder-hub sandbox, with its own Node.js runtime and, for `node`, its own bundled TypeScript expectation. Bumping one builder's major in `manifest.json` does not change the sandbox used by a different builder in the same app.
+
+**Why this matters**
+
+An old `react: 3.x` builder can still run on Node 16 long after `node` moves to `7.x` on a newer Node. A dependency that is fine for one builder can break another, and the failure signatures look different enough to get misdiagnosed as unrelated bugs:
+
+- `yarn install --frozen-lockfile` failing with `error <pkg>: The engine "node" is incompatible with this module` — an installed package's own `engines.node` excludes the builder's sandbox Node version. Fix with an exact-version `resolutions` pin (see the constraint above).
+- `tsc` failing with syntax errors inside a `.d.ts` file under `node_modules` — the builder's TypeScript can't parse a transitive `@types/*` package's newer syntax. See `payment-provider-framework`'s TS 3.9.7 constraint for the full pattern.
+- Webpack failing with `Module parse failed: Unexpected token` inside a `node_modules/**/*.mjs` file, even though the same package's CommonJS build (its `main` field) is clean — webpack prefers a package's `module`/`exports.default` (ESM) build over `main` (CJS) by default, and only the ESM build was rebuilt with newer syntax (optional chaining, nullish coalescing). Check the package's `main` vs `module`/`exports` fields and its version history for the last release whose ESM build predates the newer syntax, then pin that exact version.
+
+**Detection**
+
+When a build fails only after adding or upgrading a devDependency, identify which builder failed (the error is tagged, e.g. `[node@7]` / `react@3.x builder`) and which of the three signatures above matches, before assuming the fix belongs to one specific builder's config.
+
+**Correct**
+
+```json
+{
+  "resolutions": {
+    "node-releases": "2.0.14",
+    "react-collapsed": "3.6.0"
+  }
+}
+```
+
+Both pinned exactly: `node-releases` for an `engines.node` mismatch, `react-collapsed` because its `3.7.0+` ESM build introduced optional chaining that an older builder's webpack can't parse (its `main`/CJS build stayed clean).
+
+**Wrong**
+
+Assuming a devDependency bump that works locally — where Node is usually much newer than any builder-hub sandbox — will also work on `vtex link`/`vtex publish`, and skipping a `resolutions` check entirely.
+
 ## Preferred pattern
 
 Start by deciding the smallest useful contract for the app, then declare only the identity and builders required for that contract.
@@ -401,6 +471,50 @@ Root `package.json` — private, carries the lint/format toolchain that `.eslint
 }
 ```
 
+## Testing setup
+
+Adding `@vtex/test-tools` to a builder folder's `package.json` is optional, but when the app has (or needs) unit tests, follow this shape rather than reinventing test config. Builder-hub never runs tests itself — this is purely local/CI tooling.
+
+**Choosing the `@vtex/test-tools` version**: it bundles its own Jest, Babel, and (for `react`) Testing Library. Check what the SAME builder already pins for `typescript`/`@vtex/api` and match the era rather than reaching for the newest test-tools:
+
+- `typescript` around `3.9.x` with `@vtex/api` on a `6.x` line, or `typescript` on `5.x` with `@vtex/api` on `7.x` — both stacks use `@vtex/test-tools@^1.0.0` for `node` and `@vtex/test-tools@^3.3.2` for `react` in production apps on this platform. A modernized `typescript`/`@vtex/api` pair does not mean a newer test-tools major is required.
+- Either line still bundles **Jest 24/25** — neither understands a dependency's `package.json` `"exports"` map (see the `@vtex/api@7.x` note below). Don't reach for a newer `@vtex/test-tools` expecting that to fix an `"exports"`-map resolution failure; it won't, and chasing it burns a full reinstall cycle for nothing.
+
+**Folder convention**: a flat `__tests__/<name>.test.ts` per builder, where `<name>` is the source file's own basename regardless of which subfolder it lives in. Nest only to break a basename collision (e.g. a `handlers/collections.ts` and a `resolvers/collections.ts` in the same app); don't otherwise mirror the source tree with `__tests__/handlers/`, `__tests__/utils/`, etc.
+
+**Mocking a `node` handler's `ctx`**: build the fake context with a small factory and cast it, instead of implementing the real `ServiceContext` shape:
+
+```typescript
+function buildCtx({ collectionId, documents = [] }: { collectionId: string; documents?: unknown[] }) {
+  const searchDocuments = jest.fn().mockResolvedValue(documents)
+
+  const ctx = ({
+    clients: { masterdata: { searchDocuments } },
+    query: { _page: 1 },
+    vtex: { route: { params: { id: collectionId } } },
+    set: jest.fn(),
+  } as unknown) as Context
+
+  return { ctx, searchDocuments }
+}
+```
+
+**`@vtex/api@7.x` and OpenTelemetry**: importing anything from `@vtex/api` (even just an error class like `UserInputError`) eagerly loads `@vtex/diagnostics-nodejs`, which pulls in `@opentelemetry/*` packages using `package.json` `"exports"` subpaths. The Jest bundled by `@vtex/test-tools` can't resolve those, and the whole suite fails to run (`Cannot find module '@opentelemetry/otlp-exporter-base/node-http'`). Stub only `@vtex/diagnostics-nodejs`, not all of `@vtex/api` — this keeps the real error classes, so `instanceof` assertions still test the real thing:
+
+```typescript
+jest.mock('@vtex/diagnostics-nodejs', () => {
+  // Telemetry is off by default in tests, so the missing NewTelemetryClient just makes
+  // @vtex/api log a harmless "Failed to initialize ..." error instead of throwing. Silence
+  // it right here in the factory: it runs at the exact point @vtex/api is still loading,
+  // before a beforeAll spy would even be registered.
+  console.error = () => {}
+
+  return {}
+})
+```
+
+**`ctx.query` typing on `@vtex/api@7.x`**: query values are typed `string | string[] | undefined` (Node's `ParsedUrlQuery`), stricter than on `6.x`. Code that destructures a query param with a numeric default (`const { _page = 1 } = ctx.query`) needs an explicit `Number(_page)` / `Array.isArray` coercion before using it as a number or single string — the runtime behavior doesn't change (JS already coerced this), only the type-check does.
+
 ## Common failure modes
 
 - Declaring builders for aspirational capabilities that the app does not yet own, which makes the contract broader than the real implementation.
@@ -409,6 +523,9 @@ Root `package.json` — private, carries the lint/format toolchain that `.eslint
 - Pinning exact dependency versions instead of major-version ranges such as `0.x`, `1.x`, or `3.x`.
 - Treating `manifest.json` as a dumping ground for runtime or security details that belong in more specific skills.
 - Modeling `settingsSchema` here instead of using this skill only to decide whether app-level configuration belongs in the contract at all.
+- Pinning a `resolutions` entry with `^`/`~` for an actively-maintained package, then finding the same bad version reappears after the next clean install.
+- Diagnosing a builder-hub build failure without first checking which builder (and its Node/TypeScript sandbox) actually threw it.
+- Reaching for a newer `@vtex/test-tools` major to fix an `"exports"`-map Jest resolution failure — both the `1.x` and `3.x` lines bundle the same old Jest and neither understands `"exports"`.
 
 ## Review checklist
 
@@ -421,11 +538,14 @@ Root `package.json` — private, carries the lint/format toolchain that `.eslint
 - [ ] Would splitting the contract into two apps reduce unrelated concerns or release coupling?
 - [ ] Are runtime, route, GraphQL implementation, frontend, and security details kept out of this skill?
 - [ ] If the app ships any file under `store/`, has the merchant-facing impact of any planned major version bump been reviewed?
+- [ ] If the app has unit tests, is every non-VTEX `resolutions` entry pinned to an exact version unless it's a range-safe major-bump or an abandoned line?
+- [ ] Was any `resolutions` bisect done against a truly clean install (`node_modules` and lockfile deleted), not a reused lockfile?
 
 ## Related skills
 
 - [`vtex-io-storefront-theme-versioning`](../vtex-io-storefront-theme-versioning/SKILL.md) — Use when the app declares the `store` builder and a version change must preserve or migrate Site Editor content.
 - [`vtex-io-storefront-theme-app`](../vtex-io-storefront-theme-app/SKILL.md) — Use when the question is what the theme app's `store/` files should own.
+- [`payment-provider-framework`](../payment-provider-framework/SKILL.md) — Has the sibling constraint for `tsc`/`.d.ts` syntax failures on the TypeScript 3.9.7 line (the compile-time counterpart to the install-time and webpack failure modes covered here).
 
 ## Reference
 
