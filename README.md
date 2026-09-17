@@ -12,6 +12,7 @@ of the public ones with production learnings folded in.
 | [vtex-io-app-contract](vtex-io-app-contract)           | VTEX IO app manifest/contract: builders, dependencies, billing, identity           |
 | [vtex-io-graphql-api](vtex-io-graphql-api)             | VTEX IO GraphQL builder: schema, resolvers, `@auth`/`@cacheControl`, 2.x migration |
 | [vtex-io-masterdata](vtex-io-masterdata)               | VTEX IO Master Data v2: entities, schemas, typings, CRUD patterns                  |
+| [masterdata-storage-strategy](masterdata-storage-strategy) | When Master Data is the right storage, schema design, indexing, billing        |
 | [vtex-io-messages-and-i18n](vtex-io-messages-and-i18n) | VTEX IO localization via the `messages` builder and `react-intl`                   |
 | [vtex-io-react-apps](vtex-io-react-apps)               | VTEX IO React storefront/admin components, blocks, css-handles                     |
 | [vtex-checkout-native-fraud-controls](vtex-checkout-native-fraud-controls) | VTEX native checkout anti-fraud/anti-bot controls: reCAPTCHA v2/v3, blockRecaptchaV2, orderForm locks |
