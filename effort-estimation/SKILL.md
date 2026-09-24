@@ -70,6 +70,7 @@ Calibration anchors from real estimates, at a junior or generalist pace on VTEX.
 | Opening a support ticket with the platform requesting an account-level security hardening change already scoped and agreed (e.g. VTEX's blockRecaptchaV2) | VTEX | ~30min-1h (higher end when the ticket needs to reference a specific finding, not just request the action) |
 | Responsive/functional QA on each additional page reusing an already-validated component, per page after the first | Any | ~10min |
 | Content change only, no code | Any | 1h-1h30 |
+| Editing a hotsite's content in the admin's rich-text editor (Hotsites > hotsite > content), admin path already mapped, including transcription from the client's doc and a responsive check | Wake | ~40min |
 | Researching and documenting a security-mechanism comparison/recommendation for an estimate's own deliverable (e.g. reCAPTCHA v2 vs v3) | Any | ~1h |
 | Migrating existing content (banner, title, description, SEO text) from an old custom page to a native platform page via built-in CMS versioning, per item | VTEX IO | ~30min |
 | Transcribing ready-made content (e.g. Q&A pairs) from a source doc into an already-existing content slot, per list item | Any | ~10min |
