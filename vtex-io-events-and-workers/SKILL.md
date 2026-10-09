@@ -16,6 +16,7 @@ Use this skill when a VTEX IO app needs to process work asynchronously through e
 - Building async integrations with external services
 
 Do not use this skill for:
+
 - defining HTTP route contracts
 - designing GraphQL schemas or resolvers
 - deciding app-level policies
@@ -53,15 +54,15 @@ If the handler performs writes or external side effects without checking whether
 
 ```typescript
 export async function handleOrderCreated(ctx: Context) {
-  const { orderId } = ctx.body
-  const alreadyProcessed = await ctx.clients.statusStore.hasProcessed(orderId)
+  const { orderId } = ctx.body;
+  const alreadyProcessed = await ctx.clients.statusStore.hasProcessed(orderId);
 
   if (alreadyProcessed) {
-    return
+    return;
   }
 
-  await ctx.clients.partnerApi.sendOrder(orderId)
-  await ctx.clients.statusStore.markProcessed(orderId)
+  await ctx.clients.partnerApi.sendOrder(orderId);
+  await ctx.clients.statusStore.markProcessed(orderId);
 }
 ```
 
@@ -69,7 +70,7 @@ export async function handleOrderCreated(ctx: Context) {
 
 ```typescript
 export async function handleOrderCreated(ctx: Context) {
-  await ctx.clients.partnerApi.sendOrder(ctx.body.orderId)
+  await ctx.clients.partnerApi.sendOrder(ctx.body.orderId);
 }
 ```
 
@@ -89,8 +90,8 @@ If an event handler expects request headers, route params, or a route-specific s
 
 ```typescript
 export async function handleImport(ctx: Context) {
-  const { importId, account } = ctx.body
-  await ctx.clients.importApi.process(importId, account)
+  const { importId, account } = ctx.body;
+  await ctx.clients.importApi.process(importId, account);
 }
 ```
 
@@ -98,7 +99,7 @@ export async function handleImport(ctx: Context) {
 
 ```typescript
 export async function handleImport(ctx: Context) {
-  await ctx.clients.importApi.process(ctx.vtex.route.params.id, ctx.request.header.account)
+  await ctx.clients.importApi.process(ctx.vtex.route.params.id, ctx.request.header.account);
 }
 ```
 
@@ -119,11 +120,11 @@ If the handler catches errors without recording failure state, logging enough co
 ```typescript
 export async function handleSync(ctx: Context) {
   try {
-    await ctx.clients.partnerApi.syncCatalog(ctx.body.catalogId)
-    await ctx.clients.statusStore.markSuccess(ctx.body.catalogId)
+    await ctx.clients.partnerApi.syncCatalog(ctx.body.catalogId);
+    await ctx.clients.statusStore.markSuccess(ctx.body.catalogId);
   } catch (error) {
-    await ctx.clients.statusStore.markFailure(ctx.body.catalogId)
-    throw error
+    await ctx.clients.statusStore.markFailure(ctx.body.catalogId);
+    throw error;
   }
 }
 ```
@@ -133,9 +134,9 @@ export async function handleSync(ctx: Context) {
 ```typescript
 export async function handleSync(ctx: Context) {
   try {
-    await ctx.clients.partnerApi.syncCatalog(ctx.body.catalogId)
+    await ctx.clients.partnerApi.syncCatalog(ctx.body.catalogId);
   } catch (_) {
-    return
+    return;
   }
 }
 ```
@@ -158,15 +159,15 @@ Minimal async handler pattern:
 
 ```typescript
 export async function handleCatalogChanged(ctx: Context) {
-  const { skuId } = ctx.body
-  const alreadyDone = await ctx.clients.syncState.isProcessed(skuId)
+  const { skuId } = ctx.body;
+  const alreadyDone = await ctx.clients.syncState.isProcessed(skuId);
 
   if (alreadyDone) {
-    return
+    return;
   }
 
-  await ctx.clients.catalogSync.syncSku(skuId)
-  await ctx.clients.syncState.markProcessed(skuId)
+  await ctx.clients.catalogSync.syncSku(skuId);
+  await ctx.clients.syncState.markProcessed(skuId);
 }
 ```
 
@@ -177,16 +178,16 @@ export async function broadcast(ctx: Context, next: () => Promise<void>) {
   const {
     clients: { events },
     body: { payload, senderAppId, clientAppId },
-  } = ctx
+  } = ctx;
 
   for (const row of payload as unknown[]) {
-    await events.sendEvent(clientAppId, 'my-app.event-name', {
+    await events.sendEvent(clientAppId, "my-app.event-name", {
       data: row,
       senderAppId,
-    })
+    });
   }
 
-  await next()
+  await next();
 }
 ```
 
@@ -235,6 +236,66 @@ In development, use the Broadcaster app's `Notify Target Workspace` setting in A
 - [ ] For batch processing, is status visible per item or per small unit of work?
 - [ ] Should large handlers be split into smaller async units or orchestration steps?
 
+## Orders Broadcast integration
+
+The most common event source in VTEX IO is `vtex.orders-broadcast`, which delivers order status changes from OMS Feed v3.
+
+### Subscribing to events in service.json
+
+```json
+{
+  "events": {
+    "allStates": {
+      "sender": "vtex.orders-broadcast",
+      "topics": ["order-status-updated"]
+    },
+    "specificStates": {
+      "sender": "vtex.orders-broadcast",
+      "topics": ["ready-for-handling", "invoiced", "canceled"]
+    },
+    "everything": {
+      "sender": "vtex.orders-broadcast",
+      "topics": ["*"]
+    }
+  }
+}
+```
+
+Three ways to consume:
+
+- `topics: ["order-status-updated"]` — receives all status changes through a single catch-all topic.
+- `topics: ["ready-for-handling", "canceled", ...]` — filters by `currentState`, so the handler only fires for the listed statuses. Preferred when you know which events you need.
+- `topics: ["*"]` — wildcard that matches all events.
+
+### Event payload
+
+```json
+{
+  "domain": "Marketplace",
+  "orderId": "v69305315atmc-01",
+  "currentState": "invoice",
+  "lastState": "payment-approved",
+  "currentChangeDate": "2020-07-13T20:25:13.2304508Z",
+  "lastChangeDate": "2020-07-13T20:25:03.9527532Z"
+}
+```
+
+The payload contains status metadata only. To get order details (items, customer, shipping), call the OMS API with the `orderId`. This requires `OMSViewer` and/or `AcessaTodosPedidos` License Manager policies in `manifest.json`, plus the corresponding `outbound-access` entries.
+
+### Development workspace
+
+By default `vtex.orders-broadcast` sends events only to the `master` workspace. To receive events in a development workspace:
+
+1. Go to `https://{account}.myvtex.com/admin/apps/vtex.orders-broadcast/setup`
+2. Set `Target Workspace` to your workspace name
+3. Link your app in that workspace
+
+Remember to reset `Target Workspace` back to `master` when done testing.
+
+### Duplicate delivery
+
+`vtex.orders-broadcast` delivers events with at-least-once semantics. The same `orderId` + `currentState` combination may arrive multiple times, often from different workers. Always apply the idempotency constraint described above before performing side effects.
+
 ## Related skills
 
 - [`vtex-io-data-access-patterns`](../vtex-io-data-access-patterns/SKILL.md) - Use when choosing where idempotency keys, sync state, or processing records should live
@@ -245,3 +306,5 @@ In development, use the Broadcaster app's `Notify Target Workspace` setting in A
 - [Service](https://developers.vtex.com/docs/guides/vtex-io-documentation-service) - Event declaration and service execution model
 - [Node Builder](https://developers.vtex.com/docs/guides/vtex-io-documentation-node-builder) - Backend file structure for services
 - [Broadcaster](https://developers.vtex.com/docs/apps/vtex.broadcaster) - Internal event delivery context and the `Notify Target Workspace` setting for development
+- [How to receive order notifications on VTEX IO](https://developers.vtex.com/docs/guides/how-to-receive-order-notifications-on-vtex-io) - Official guide for consuming orders-broadcast events
+- [Orders Feed Example](https://github.com/vtex-apps/orders-feed-example) - Reference implementation with topic filtering examples

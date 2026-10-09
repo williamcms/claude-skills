@@ -18,6 +18,7 @@ of the public ones with production learnings folded in.
 | [vtex-checkout-native-fraud-controls](vtex-checkout-native-fraud-controls) | VTEX native checkout anti-fraud/anti-bot controls: reCAPTCHA v2/v3, blockRecaptchaV2, orderForm locks |
 | [vtex-io-performance-debugging](vtex-io-performance-debugging) | VTEX IO storefront performance debugging: official checklist, script ownership, bundle attribution |
 | [vtex-io-site-editor-content-schema](vtex-io-site-editor-content-schema) | VTEX Site Editor content schemas: JSON Schema, widgets, conditional fields, admin-pages GraphQL |
+| [vtex-io-events-and-workers](vtex-io-events-and-workers) | VTEX IO async processing: event handlers, orders-broadcast, idempotency, workers |
 | [commit-guidelines](commit-guidelines)                 | Git commit message rules: format, approval workflow, co-author attribution         |
 
 ## Install
