@@ -1,6 +1,6 @@
 ---
 name: commit-guidelines
-description: Apply when writing, proposing, or running a git commit message. Covers the mandatory approve-the-exact-message-before-committing workflow, message formatting (line-length limits, dash-bullet complements, tense, tone), verifying against git history before describing a change as moved or refactored rather than newly added, never attributing an LLM as commit co-author without prior confirmation, and validating the current branch (confirming with the user before committing to the default/main/master branch). Use whenever composing a commit message, about to run `git commit`, or asked to "create a commit" versus just "create a commit message".
+description: Apply when writing, proposing, or running a git commit message. Covers the mandatory approve-the-exact-message-before-committing workflow, message formatting (line-length limits, dash-bullet complements, tense, tone), verifying against git history before describing a change as moved or refactored rather than newly added, omitting LLM co-author attribution unless the user asks for it, listing only what was added or changed, and validating the current branch (confirming with the user before committing to the default/main/master branch). Use whenever composing a commit message, about to run `git commit`, or asked to "create a commit" versus just "create a commit message".
 ---
 
 # Commit guidelines
@@ -9,7 +9,7 @@ description: Apply when writing, proposing, or running a git commit message. Cov
 
 - **Never run `git commit` without the user approving the exact message first.** "Create a commit" means present the message, wait for approval, then commit. "Create a commit message" means the message only, no git commands.
 - **Validate the current branch before committing.** Run `git branch --show-current` and compare it against the repo's default branch (e.g. `git symbolic-ref refs/remotes/origin/HEAD` or `git remote show origin`). If the current branch IS that default/main/master branch, stop and explicitly ask the user whether they really want to commit there, before running `git commit`. Don't create or switch branches on the user's behalf unless they ask for that.
-- **Never attribute an LLM/AI assistant as commit co-author** (a `Co-Authored-By:` trailer for the assistant) unless the user has explicitly confirmed, for this commit or as a standing preference, that they want it. A commit message suggestion alone is not proof that an LLM/AI is actively working on the repo. Default: ask first.
+- **Never attribute an LLM/AI assistant as commit co-author** (a `Co-Authored-By:` trailer for the assistant) unless the user explicitly asks to include it, for this commit or as a standing preference. When nothing is said about it, omit the trailer silently; don't ask for confirmation. A commit message suggestion alone is not proof that an LLM/AI is actively working on the repo.
 - **Before describing a change as moved, renamed, or refactored instead of newly added, verify it against git history**, not against what the working tree or staging area currently looks like. Run `git log` and `git show <past-ref>:<path>` on the affected file; only call something a "move" if a past commit actually contained the prior state. Content that only ever existed uncommitted (working tree or index) was never "moved" from anywhere, it is a first-time addition.
 - **Base the message only on the actual staged diff, not on the conversation.** Run `git diff --staged` and describe what the files changed into, regardless of who wrote each change, which plan step it came from, or whether the assistant made the edit or not. Don't narrate proposals, plan/step numbering, or authorship attribution in the message, or in the reasoning shown to the user while producing it.
 
@@ -21,6 +21,7 @@ description: Apply when writing, proposing, or running a git commit message. Cov
 - After a blank line, one or more complement lines may follow, each max 70 characters.
 - Prefix each complement line with "- " (a dash bullet).
 - Each complement bullet is one self-contained statement on a single line, within the 70-char limit. Never wrap a statement onto a continuation line; if it doesn't fit, rephrase it as two or more shorter bullets instead.
+- Complement bullets list only what was added or changed in behavior or content. Leave out details that were kept as they were, cosmetic adjustments, and anything a reader of the history wouldn't care about.
 - Keep component or module names only if relevant or included by the user.
 - Use past tense in descriptions (e.g., "adjusted" instead of "adjust").
 - No markdown formatting in commit messages (no backticks, no code formatting) except for lists.
