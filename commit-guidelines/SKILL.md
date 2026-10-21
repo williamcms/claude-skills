@@ -18,7 +18,7 @@ description: Apply when writing, proposing, or running a git commit message. Cov
 - Write the commit message in English, regardless of the language the conversation is happening in.
 - First line: max 50 characters, concise summary. Keep any provided prefixes (e.g., `feat:`, `fix:`, `refactor:`), and adjust wording to meet the 50-char limit.
 - If a prefix was not provided, ask if the user wants one added, and suggest one based on the Conventional Commits spec (https://www.conventionalcommits.org/en/v1.0.0/).
-- After a blank line, one or more complement lines may follow, each max 70 characters.
+- Default to a single-line message. Add complement lines only when the change genuinely needs detail or context the summary cannot carry; a small or self-explanatory change stays one line, never padded with bullets. When they are used, leave a blank line after the summary, and each complement line is max 70 characters.
 - Prefix each complement line with "- " (a dash bullet).
 - Each complement bullet is one self-contained statement on a single line, within the 70-char limit. Never wrap a statement onto a continuation line; if it doesn't fit, rephrase it as two or more shorter bullets instead.
 - Complement bullets list only what was added or changed in behavior or content. Leave out details that were kept as they were, cosmetic adjustments, and anything a reader of the history wouldn't care about.
