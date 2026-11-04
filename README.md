@@ -21,6 +21,7 @@ of the public ones with production learnings folded in.
 | [vtex-io-events-and-workers](vtex-io-events-and-workers) | VTEX IO async processing: event handlers, orders-broadcast, idempotency, workers |
 | [commit-guidelines](commit-guidelines)                 | Git commit message rules: format, approval workflow, co-author attribution         |
 | [faststore-webops-cms-preview](faststore-webops-cms-preview) | Preview unpublished FastStore code (WebOps deploy) + new CMS branch content via /api/preview |
+| [vtex-io-rewriter-routing](vtex-io-rewriter-routing) | vtex.rewriter routes: URL resolution, store-indexer, not-found, redirects, product-URL limits |
 
 ## Install
 
