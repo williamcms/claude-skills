@@ -20,6 +20,7 @@ of the public ones with production learnings folded in.
 | [vtex-io-site-editor-content-schema](vtex-io-site-editor-content-schema) | VTEX Site Editor content schemas: JSON Schema, widgets, conditional fields, admin-pages GraphQL |
 | [vtex-io-events-and-workers](vtex-io-events-and-workers) | VTEX IO async processing: event handlers, orders-broadcast, idempotency, workers |
 | [commit-guidelines](commit-guidelines)                 | Git commit message rules: format, approval workflow, co-author attribution         |
+| [faststore-webops-cms-preview](faststore-webops-cms-preview) | Preview unpublished FastStore code (WebOps deploy) + new CMS branch content via /api/preview |
 
 ## Install
 
