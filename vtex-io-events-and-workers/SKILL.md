@@ -296,9 +296,34 @@ Remember to reset `Target Workspace` back to `master` when done testing.
 
 `vtex.orders-broadcast` delivers events with at-least-once semantics. The same `orderId` + `currentState` combination may arrive multiple times, often from different workers. Always apply the idempotency constraint described above before performing side effects.
 
+## Subscribing by event key (`keys`)
+
+Besides the `sender` + `topics` shape used for `vtex.orders-broadcast`, a `service.json` event entry can subscribe by `keys` — the event key published through `events.sendEvent(recipient, key, data)` (the second argument). `sender` is optional in this shape: omit it to subscribe to the key without scoping to a specific app, or set it to fire only on that app's event.
+
+Example from `vtex.store-indexer`, which reacts to catalog broadcaster events and to a cross-app indexing event:
+
+```json
+{
+  "events": {
+    "broadcasterProduct": { "keys": ["broadcaster.product"] },
+    "broadcasterBrand": { "keys": ["broadcaster.brand"] },
+    "broadcasterCategory": { "keys": ["broadcaster.category"] },
+    "searchUrlsCountIndex": {
+      "sender": "vtex.search-graphql",
+      "keys": ["searchUrlsCountIndex"]
+    }
+  }
+}
+```
+
+- The entry name (`broadcasterProduct`, ...) is the handler key you register in the Service `events` map; the `keys` array holds the event key(s) that trigger it.
+- The `broadcaster.*` entries omit `sender`, so they fire on the catalog broadcaster's product/brand/category change events; `searchUrlsCountIndex` sets `sender` to fire only on that key from `vtex.search-graphql`.
+- The catalog broadcaster (`broadcaster.product` / `brand` / `category`) is the standard source for catalog-change-driven indexing, the way `orders-broadcast` is for order status.
+
 ## Related skills
 
 - [`vtex-io-data-access-patterns`](../vtex-io-data-access-patterns/SKILL.md) - Use when choosing where idempotency keys, sync state, or processing records should live
+- [`vtex-io-rewriter-routing`](../vtex-io-rewriter-routing/SKILL.md) - Use when the consumer is a route indexer reacting to catalog broadcaster events
 - [`vtex-io-observability-and-ops`](../vtex-io-observability-and-ops/SKILL.md) - Use when the main question is how async failures should be logged, measured, and monitored
 
 ## Reference
