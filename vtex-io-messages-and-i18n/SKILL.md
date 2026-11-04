@@ -203,6 +203,21 @@ Keep a complete `en.json` as the default fallback, even when the app’s main au
 
 Use translated IDs in code, keep translation files explicit, and centralize user-facing copy in the messages system instead of scattering literals through the app.
 
+## Catalog data translation (messages vs multi-language)
+
+Translated product/category copy and slugs are resolved at the GraphQL layer, not stored per-locale in the storefront. Two paths coexist, and `vtex.search-resolver` picks one by the entity's `origin`:
+
+- **Legacy (messages-based).** Catalog data lives in the store's default locale; `vtex.messages` holds the translations, keyed by `content` + `context` (the entity id) + `from` (source locale). The resolver encodes each translatable field as a V2 translatable string (`formatTranslatableProp(prop, idProp)` → `addContextToTranslatableString` → `formatTranslatableStringV2`), and the `@vtex/api` serialization layer resolves it against `vtex.messages` for the requested locale. Translations are written through the catalog's `translate*` mutations, which persist into `vtex.messages` under the entity context.
+- **New (multi-language / IS-indexed).** Catalog multi-language is fed to Intelligent Search, which returns data already translated for the request locale (`Accept-Language`). When `origin` is `intelligent-search` (or `intsch`), the resolver returns fields as-is and does not re-translate through messages.
+
+The `linkText` (slug) field follows the same split: when the data came from Intelligent Search it is already the translated slug; otherwise the resolver reads the per-binding slug from the rewriter (`rewriter.getRoute(productId, 'product', bindingId)`), falling back to the raw `linkText`. `cacheId` is derived from the raw source `linkText`, so it stays stable across locales.
+
+Implications:
+
+- `context` must be the entity id — a translatable field without its id context cannot be matched to a translation.
+- Do not double-translate: check `origin` before sending a field through the messages path.
+- Per-binding slugs live in the rewriter (see `vtex-io-rewriter-routing`), not in message files.
+
 ## Common failure modes
 
 - Hardcoding user-facing strings in JSX, resolvers, or handler responses.
@@ -224,6 +239,7 @@ Use translated IDs in code, keep translation files explicit, and centralize user
 - [`vtex-io-storefront-react`](../vtex-io-storefront-react/SKILL.md) - Use when the main question is storefront component structure and shopper-facing UI behavior
 - [`vtex-io-admin-react`](../vtex-io-admin-react/SKILL.md) - Use when the main question is Admin UI structure and operational interaction patterns
 - [`vtex-io-graphql-api`](../vtex-io-graphql-api/SKILL.md) - Use when the main question is GraphQL schema and resolver design rather than translation infrastructure
+- [`vtex-io-rewriter-routing`](../vtex-io-rewriter-routing/SKILL.md) - Use when the question is per-binding translated URLs/slugs and how routes are indexed
 
 ## Reference
 
