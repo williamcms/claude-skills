@@ -67,6 +67,26 @@ mutation { redirect { save(route: $route /* RedirectInput */) { type } } }
 
 The admin GraphQL IDE exposes the full schema (including listing/pagination fields) — inspect it there before relying on an operation this skill does not list.
 
+## Listing a store's bindings
+
+Routes, slugs, and translations are per binding, so you usually need the store's binding ids first. From a backend IO app, register the `@vtex/api` `Tenant` client and call it:
+
+```typescript
+const tenant = await ctx.clients.tenant.info()
+// tenant.bindings: Binding[]
+```
+
+Under the hood this is a Janus call, `GET /api/tenant/tenants?q={account}` (internal, not a public storefront URL). Each `Binding` carries:
+
+- `id` — the binding id used as the `binding` field on every rewriter route
+- `canonicalBaseAddress`, `alternateBaseAddresses` — the binding's host/path
+- `defaultLocale`, `supportedLocales` — drive per-binding slug translation
+- `defaultCurrency`, `supportedCurrencies`
+- `targetProduct` — `vtex-storefront` for a storefront binding, otherwise admin/other
+- `extraContext` — e.g. `extraContext.portal.salesChannel` ties the binding to a sales channel
+
+Only `targetProduct === 'vtex-storefront'` bindings have storefront routes — filter to those before expecting rewriter internals (this is what store-indexer's `filterStoreBindings` does). Match a product to its bindings by sales channel through `extraContext.portal.salesChannel`.
+
 ## Hard constraints
 
 ### `routesVersion` is platform-managed, not an input
@@ -116,6 +136,7 @@ To customize route or not-found behavior, add your own event-driven app that wri
 - [`vtex-io-events-and-workers`](../vtex-io-events-and-workers/SKILL.md) — the catalog events that drive store-indexer and any custom indexer.
 - [`vtex-io-messages-and-i18n`](../vtex-io-messages-and-i18n/SKILL.md) — how per-binding slug translation is stored and resolved.
 - [`vtex-io-graphql-api`](../vtex-io-graphql-api/SKILL.md) — building the `AppGraphQLClient` used to call the rewriter.
+- [`vtex-io-rootpath`](../vtex-io-rootpath/SKILL.md) — multi-binding stores with path prefixes, where per-binding routing matters most.
 
 ## Reference
 
