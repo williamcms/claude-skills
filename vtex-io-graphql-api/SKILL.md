@@ -42,9 +42,9 @@ graphql/
 ```
 
 Built-in directives:
-- **`@cacheControl`**: `scope` (`PUBLIC`/`PRIVATE`), `maxAge` (`SHORT` 30s, `MEDIUM` 5min, `LONG` 1h)
+- **`@cacheControl`**: sets the response HTTP `Cache-Control` header. `scope` (`PUBLIC` = shared/CDN cache, `PRIVATE` = per-user, `SEGMENT` = per-segment cache for shopper/segment-isolated data, used on every Intelligent Search query), `maxAge` written as a bare enum value `SHORT` / `MEDIUM` / `LONG`, resolving to `120s` / `3600s` (1h) / `86400s` (24h) — the `MAX_AGE` constants in `@vtex/api`. Most-restrictive wins: the request's cache-control ceiling starts at `LONG` and the directive only *lowers* it; it never raises maxAge or loosens scope.
 - **`@auth`**: Authorization based on License Manager resources. Arguments: `scope` (`PUBLIC`/`PRIVATE`; `2.x` only, mandatory there), `productCode` and `resourceCode` (License Manager product and resource; mandatory on `2.x` when scope is `PRIVATE`). The requester is identified by the auth token (`VtexIdclientAutCookie`): app token, Admin user token, or application key. Store users CANNOT be authorized (they have no License Manager role), so shopper-facing operations use `@auth(scope: PUBLIC)`.
-- **`@smartcache`**: Automatically caches query results in VTEX infrastructure.
+- **`@smartcache`**: a different mechanism from `@cacheControl` (dependency-based invalidation, not a plain TTL). `@smartcache(maxAge: "SHORT"|"MEDIUM"|"LONG")` — note the value is a quoted String here, whereas `@cacheControl`'s `maxAge` is a bare enum value — sets `x-vtex-etag-control: public, max-age=<120|3600|86400>` and enables the recorder, which collects `x-vtex-meta` dependency keys so the cached entry is purged when its underlying data changes, not only when the TTL expires. Use it when freshness must track source changes; it is safe to combine with `@cacheControl` when you want both a CDN TTL and dependency invalidation.
 
 ## Hard constraints
 
