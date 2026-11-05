@@ -76,6 +76,20 @@ const tenant = await ctx.clients.tenant.info()
 // tenant.bindings: Binding[]
 ```
 
+Or, with no code, in the admin GraphQL IDE (install `vtex.admin-graphql-ide`, then select `vtex.tenant-graphql` in the dropdown):
+
+```graphql
+query {
+  tenantInfo {
+    bindings {
+      id
+      canonicalBaseAddress
+      defaultLocale
+    }
+  }
+}
+```
+
 Under the hood this is a Janus call, `GET /api/tenant/tenants?q={account}` (internal, not a public storefront URL). Each `Binding` carries:
 
 - `id` — the binding id used as the `binding` field on every rewriter route
@@ -141,4 +155,5 @@ To customize route or not-found behavior, add your own event-driven app that wri
 ## Reference
 
 - [vtex.store-indexer](https://github.com/vtex-apps/store-indexer) — public source that writes rewriter internals (route formatting, not-found classification, per-binding translation).
-- Account admin GraphQL IDE (`/admin/graphql-ide`) — inspect the live `vtex.rewriter` schema and query the current route map.
+- Account admin GraphQL IDE (`vtex.admin-graphql-ide`) — inspect the live `vtex.rewriter` schema and query the current route map; select `vtex.tenant-graphql` to query bindings.
+- [Checking your store's binding ID](https://developers.vtex.com/docs/guides/checking-your-stores-binding-id) — the `tenantInfo { bindings }` query and where to run it.
