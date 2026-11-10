@@ -65,7 +65,7 @@ mutation { internal { deleteMany(paths: $paths, locators: $locators) } }
 mutation { redirect { save(route: $route /* RedirectInput */) { type } } }
 ```
 
-The admin GraphQL IDE exposes the full schema (including listing/pagination fields) — inspect it there before relying on an operation this skill does not list.
+The `internal` namespace also exposes a listing operation (`listInternals`) to enumerate routes rather than look one up, and `redirect` has its own `save` plus listing/delete operations. Confirm their exact arguments in the admin GraphQL IDE — this skill verifies only the operations above against the `vtex.store-indexer` client.
 
 ## Listing a store's bindings
 

@@ -46,6 +46,8 @@ Built-in directives:
 - **`@auth`**: Authorization based on License Manager resources. Arguments: `scope` (`PUBLIC`/`PRIVATE`; `2.x` only, mandatory there), `productCode` and `resourceCode` (License Manager product and resource; mandatory on `2.x` when scope is `PRIVATE`). The requester is identified by the auth token (`VtexIdclientAutCookie`): app token, Admin user token, or application key. Store users CANNOT be authorized (they have no License Manager role), so shopper-facing operations use `@auth(scope: PUBLIC)`.
 - **`@smartcache`**: a different mechanism from `@cacheControl` (dependency-based invalidation, not a plain TTL). `@smartcache(maxAge: "SHORT"|"MEDIUM"|"LONG")` — note the value is a quoted String here, whereas `@cacheControl`'s `maxAge` is a bare enum value — sets `x-vtex-etag-control: public, max-age=<120|3600|86400>` and enables the recorder, which collects `x-vtex-meta` dependency keys so the cached entry is purged when its underlying data changes, not only when the TTL expires. Use it when freshness must track source changes; it is safe to combine with `@cacheControl` when you want both a CDN TTL and dependency invalidation.
 
+Custom directives pair with these. For per-segment data, `@cacheControl(scope: SEGMENT)` is typically paired with a custom `@withSegment` directive (as in `vtex.search-graphql` / `vtex.search-resolver`): `@withSegment` decodes the shopper's `segmentToken` (base64 JSON) into `ctx.vtex.segment` before the field resolves, so a segment-varying field both sees the segment and is cached per segment. `@withSegment` is app-provided (declared in `directives.graphql`, implemented under `node/directives/`), not a builder directive.
+
 ## Hard constraints
 
 ### Constraint: Declare the graphql Builder
