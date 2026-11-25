@@ -22,14 +22,20 @@ of the public ones with production learnings folded in.
 | [commit-guidelines](commit-guidelines)                 | Git commit message rules: format, approval workflow, co-author attribution         |
 | [faststore-webops-cms-preview](faststore-webops-cms-preview) | Preview unpublished FastStore code (WebOps deploy) + new CMS branch content via /api/preview |
 | [vtex-io-rewriter-routing](vtex-io-rewriter-routing) | vtex.rewriter routes: URL resolution, store-indexer, not-found, redirects, product-URL limits |
+| [vtex-app-source-download](vendor/gsbenevides-claude-skills/vtex-app-source-download) † | Download a published VTEX IO app's source straight from the VTEX Registry |
+
+<sub>† Vendored from [gsbenevides2/claude-skills](https://github.com/gsbenevides2/claude-skills) as a git submodule under `vendor/`, see [Install](#install).</sub>
 
 ## Install
 
 Clone the repo, then link the skill(s) you want into your Claude Code skills folder.
 
 ```bash
-git clone https://github.com/williamcms/claude-skills.git
+git clone --recurse-submodules https://github.com/williamcms/claude-skills.git
 ```
+
+`--recurse-submodules` also pulls the vendored skills (marked † above). Already
+cloned without it? Fetch them with `git submodule update --init --recursive`.
 
 **Windows** (junction, no admin needed):
 
@@ -45,3 +51,18 @@ ln -s /path/to/claude-skills/<skill-name> ~/.claude/skills/<skill-name>
 
 Linking (instead of copying) keeps the skill live: pulling repo updates
 applies immediately, no re-copy needed.
+
+### Vendored skills (submodules)
+
+Skills marked † live in another repo, pulled in as a git submodule under
+`vendor/`. Link them the same way, pointing at the path inside `vendor/`:
+
+```bash
+ln -s /path/to/claude-skills/vendor/gsbenevides-claude-skills/vtex-app-source-download ~/.claude/skills/vtex-app-source-download
+```
+
+Update a vendored skill to its upstream latest:
+
+```bash
+git submodule update --remote vendor/gsbenevides-claude-skills
+```

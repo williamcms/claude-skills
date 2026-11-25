@@ -1,0 +1,3 @@
+[submodule "vendor/gsbenevides-claude-skills"]
+	path = vendor/gsbenevides-claude-skills
+	url = https://github.com/gsbenevides2/claude-skills.git
