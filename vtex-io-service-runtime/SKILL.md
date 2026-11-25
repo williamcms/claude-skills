@@ -55,11 +55,11 @@ Suggested defaults:
 
 Scaling ranges and exceptions:
 
-- Use 128 to 256 MB for simpler IO-bound services, and move to 512 MB only when there is evidence of OOM, large payload processing, or heavier libraries.
+- Use 128 to 256 MB for simpler IO-bound services, and move to 512 MB only when there is evidence of OOM, large payload processing, or heavier libraries. The platform caps `memory` at `1024` MB (default `128`); treat values near that ceiling as exceptional for partner apps.
 - Increase `workers` to 2 to 4 only for high-throughput IO-bound workloads after measuring benefit. Avoid using more than 4 workers per instance as a default.
-- Increase `maxReplicas` from `5` toward `10` only when public traffic or predictable peaks justify it. Treat values above 10 as exceptions that require explicit justification and monitoring in partner apps.
-- Avoid `timeout` values above 60 seconds for HTTP routes; if more time is needed, redesign the flow as async work.
-- Remember that `ttl` has a documented minimum of `10` minutes and maximum of `60` minutes. Use higher values intentionally to reduce cold starts on low-traffic or bursty services, and avoid treating `ttl` like a per-request timeout.
+- Increase `maxReplicas` from `5` toward `10` only when public traffic or predictable peaks justify it. Treat values above 10 as exceptions that require explicit justification and monitoring in partner apps. The platform hard maximum for `maxReplicas` is `40`.
+- Avoid `timeout` values above 60 seconds for HTTP routes; if more time is needed, redesign the flow as async work. `timeout` (default `10`, minimum `1`, maximum `60` seconds) governs only incoming requests handled by the service; it does not affect outgoing calls the app makes to other clients, which have their own per-client timeouts.
+- Remember that `ttl` has a documented minimum of `10` minutes and maximum of `60` minutes. Use higher values intentionally to reduce cold starts on low-traffic or bursty services, and avoid treating `ttl` like a per-request timeout. Older, undeployed, linked, and beta versions have `ttl` forced to `10` minutes regardless of the configured value.
 - For partner apps, `rateLimitPerReplica.perMinute` often starts in the `60` to `300` range for normal routes and in the `10` to `60` range for more expensive ones. `rateLimitPerReplica.concurrent` often starts between `1` and `5`.
 
 ## Hard constraints
